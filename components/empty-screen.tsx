@@ -15,7 +15,7 @@ export function EmptyScreen() {
           <Image src={logoImage} alt="Logo" width={200} height={200} />
         </div>
         <h1 className="text-lg font-semibold">
-          Welcome to Al-Amanah Islamic Assistant!
+          Welcome to Al-Amanah, the Islamic Assistant!
         </h1>
         <p className="leading-normal text-muted-foreground">
           This is an Islamic AI chatbot trained on The Holy Quran and authentic Hadiths.
