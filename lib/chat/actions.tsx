@@ -143,40 +143,42 @@ async function submitUserMessage(content: string) {
     const decoder = new TextDecoder('utf-8');
 
     let done = false;
-    let content = '';
+    let accumulatedContent = '';
 
     while (!done) {
       const { value, done: streamDone } = await reader.read();
       done = streamDone;
 
       const chunk = decoder.decode(value, { stream: true });
-      content += chunk;
+      accumulatedContent += chunk;
 
       // Extract and process individual messages from the event stream
-      const messages = content.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
+      const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
 
       messages.forEach((msg) => {
         if (!textStream) {
-          textStream = createStreamableValue('')
-          textNode = <BotMessage content={textStream.value} />
+          textStream = createStreamableValue('');
+          textNode = <BotMessage content={textStream.value} />;
         }
 
         textStream.update(msg);
       });
 
       if (done) {
-        textStream.done()
-        aiState.done({
-          ...aiState.get(),
-          messages: [
-            ...aiState.get().messages,
-            {
-              id: nanoid(),
-              role: 'assistant',
-              content
-            }
-          ]
-        })
+        if (textStream) {
+          textStream.done();
+          aiState.done({
+            ...aiState.get(),
+            messages: [
+              ...aiState.get().messages,
+              {
+                id: nanoid(),
+                role: 'assistant',
+                content: accumulatedContent
+              }
+            ]
+          });
+        }
       }
     }
   } else {
@@ -186,8 +188,9 @@ async function submitUserMessage(content: string) {
   return {
     id: nanoid(),
     display: textNode // Or any other relevant UI representation
-  }
+  };
 }
+
 
 
 export type AIState = {
