@@ -125,6 +125,7 @@ async function submitUserMessage(content: string) {
 
   let textStream = createStreamableValue<string>('');
   let textNode: React.ReactNode = <BotMessage content={textStream.value} />;
+  let accumulatedContent = ''; // Accumulate the content here
 
   const apiUrl = 'http://99.233.10.238:5000/chat'; // Replace with your FastAPI URL
 
@@ -146,7 +147,6 @@ async function submitUserMessage(content: string) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let done = false;
-    let accumulatedContent = '';
 
     while (!done) {
       const { value, done: streamDone } = await reader.read();
@@ -161,14 +161,14 @@ async function submitUserMessage(content: string) {
 
       parts.forEach((msg) => {
         const cleanedMsg = msg.replace(/^data: /, '').trim();
-        textStream.update(textStream.value + cleanedMsg);
+        textStream.update((prev) => prev + cleanedMsg);
       });
     }
 
     // When the stream is complete
     if (accumulatedContent) {
       const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
-      textStream.update(textStream.value + finalMessage);
+      textStream.update((prev) => prev + finalMessage);
       textStream.done();
 
       aiState.update({
@@ -178,7 +178,7 @@ async function submitUserMessage(content: string) {
           {
             id: nanoid(),
             role: 'assistant',
-            content: textStream.value // Ensure this is a string
+            content: textStream.value.toString() // Use the accumulated string
           }
         ]
       });
@@ -192,6 +192,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 export type AIState = {
