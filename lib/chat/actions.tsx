@@ -161,14 +161,14 @@ async function submitUserMessage(content: string) {
 
       parts.forEach((msg) => {
         const cleanedMsg = msg.replace(/^data: /, '').trim();
-        textStream.update((prev) => prev + cleanedMsg);
+        textStream.update(textStream.value + cleanedMsg);
       });
     }
 
     // When the stream is complete
     if (accumulatedContent) {
       const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
-      textStream.update((prev) => prev + finalMessage);
+      textStream.update(textStream.value + finalMessage);
       textStream.done();
 
       aiState.update({
@@ -192,6 +192,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 
