@@ -147,7 +147,6 @@ async function submitUserMessage(content: string) {
     const decoder = new TextDecoder('utf-8');
     let done = false;
     let accumulatedContent = '';
-    let buffer = ''; // Buffer to store partial messages
 
     while (!done) {
       const { value, done: streamDone } = await reader.read();
@@ -162,16 +161,14 @@ async function submitUserMessage(content: string) {
 
       parts.forEach((msg) => {
         const cleanedMsg = msg.replace(/^data: /, '').trim();
-        buffer += cleanedMsg;
-
-        textStream.update(buffer);
+        textStream.update(textStream.value + cleanedMsg);
       });
 
       if (done && accumulatedContent) {
         const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
-        buffer += finalMessage;
-
+        textStream.update(textStream.value + finalMessage);
         textStream.done();
+
         aiState.update({
           ...aiState.get(),
           messages: [
@@ -179,7 +176,7 @@ async function submitUserMessage(content: string) {
             {
               id: nanoid(),
               role: 'assistant',
-              content: buffer // Ensure this is a string
+              content: textStream.value // Ensure this is a string
             }
           ]
         });
@@ -194,9 +191,6 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
-
-
-
 
 
 export type AIState = {
