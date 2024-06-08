@@ -123,10 +123,10 @@ async function submitUserMessage(content: string) {
     ]
   })
 
-  let textStream: ReturnType<typeof createStreamableValue<string>> | undefined
-  let textNode: React.ReactNode | undefined
+  let textStream = createStreamableValue<string>('');
+  let textNode: React.ReactNode = <BotMessage content={textStream.value} />;
 
-  const apiUrl = 'http://99.233.10.238:5000/chat' // Replace with your FastAPI URL
+  const apiUrl = 'http://99.233.10.238:5000/chat'; // Replace with your FastAPI URL
 
   try {
     const response = await fetch(apiUrl, {
@@ -147,7 +147,7 @@ async function submitUserMessage(content: string) {
     const decoder = new TextDecoder('utf-8');
     let done = false;
     let accumulatedContent = '';
-    let buffer = '';  // Buffer to store partial messages
+    let buffer = ''; // Buffer to store partial messages
 
     while (!done) {
       const { value, done: streamDone } = await reader.read();
@@ -162,30 +162,27 @@ async function submitUserMessage(content: string) {
 
       parts.forEach((msg) => {
         const cleanedMsg = msg.replace(/^data: /, '').trim();
-        if (!textStream) {
-          textStream = createStreamableValue('');
-          textNode = <BotMessage content={textStream.value} />;
-        }
-        textStream.update(textStream.value + cleanedMsg);
+        buffer += cleanedMsg;
+
+        textStream.update(buffer);
       });
 
       if (done && accumulatedContent) {
         const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
-        if (textStream) {
-          textStream.update(textStream.value + finalMessage);
-          textStream.done();
-          aiState.done({
-            ...aiState.get(),
-            messages: [
-              ...aiState.get().messages,
-              {
-                id: nanoid(),
-                role: 'assistant',
-                content: textStream.value
-              }
-            ]
-          });
-        }
+        buffer += finalMessage;
+
+        textStream.done();
+        aiState.update({
+          ...aiState.get(),
+          messages: [
+            ...aiState.get().messages,
+            {
+              id: nanoid(),
+              role: 'assistant',
+              content: buffer // Ensure this is a string
+            }
+          ]
+        });
       }
     }
   } catch (error) {
@@ -197,6 +194,10 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
+
+
+
 
 export type AIState = {
   chatId: string
