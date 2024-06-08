@@ -178,7 +178,7 @@ async function submitUserMessage(content: string) {
           {
             id: nanoid(),
             role: 'assistant',
-            content: textStream.value // Ensure this is a string
+            content: textStream.value.toString() // Ensure this is a string
           }
         ]
       });
@@ -192,6 +192,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 
