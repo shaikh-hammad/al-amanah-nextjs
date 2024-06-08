@@ -156,11 +156,12 @@ async function submitUserMessage(content: string) {
       accumulatedContent += chunk;
 
       // Extract and process individual messages from the event stream
-      const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, '').trim());
+      const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
 
-      messages.forEach((msg) => {
-        textStream.update(msg);
-      });
+      // Join the messages with a newline separator to maintain spaces
+      const processedContent = messages.join('\n');
+
+      textStream.update(processedContent);
 
       // Ensure that we clear accumulatedContent after processing
       accumulatedContent = '';
@@ -189,6 +190,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 export type AIState = {
