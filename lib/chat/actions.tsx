@@ -126,7 +126,7 @@ async function submitUserMessage(content: string) {
   let textStream: ReturnType<typeof createStreamableValue<string>> | undefined
   let textNode: React.ReactNode | undefined
 
-  const apiUrl = 'https://your-backend-url/chat' // Replace with your FastAPI URL
+  const apiUrl = 'http://99.233.10.238:5000/chat' // Replace with your FastAPI URL
 
   try {
     const response = await fetch(apiUrl, {
