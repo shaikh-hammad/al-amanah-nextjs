@@ -176,7 +176,7 @@ async function submitUserMessage(content: string) {
         {
           id: nanoid(),
           role: 'assistant',
-          content: textStream.value // Update with the final content
+          content: textStream.value.toString() // Update with the final content string
         }
       ]
     });
@@ -189,10 +189,6 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
-
-
-
-
 
 
 export type AIState = {
