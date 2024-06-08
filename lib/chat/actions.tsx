@@ -123,25 +123,28 @@ async function submitUserMessage(content: string) {
     ]
   })
 
-  let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
-  let textNode: undefined | React.ReactNode
+  let textStream: ReturnType<typeof createStreamableValue<string>> | undefined
+  let textNode: React.ReactNode | undefined
 
-  const apiUrl = 'http://99.233.10.238:5000/chat'; // Replace with your FastAPI URL
+  const apiUrl = 'https://your-backend-url/chat' // Replace with your FastAPI URL
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      message: content
-    })
-  });
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: content
+      })
+    });
 
-  if (response.ok && response.body) {
+    if (!response.ok || !response.body) {
+      throw new Error('Response not OK or body is not readable');
+    }
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
-
     let done = false;
     let accumulatedContent = '';
 
@@ -164,25 +167,23 @@ async function submitUserMessage(content: string) {
         textStream.update(msg);
       });
 
-      if (done) {
-        if (textStream) {
-          textStream.done();
-          aiState.done({
-            ...aiState.get(),
-            messages: [
-              ...aiState.get().messages,
-              {
-                id: nanoid(),
-                role: 'assistant',
-                content: accumulatedContent
-              }
-            ]
-          });
-        }
+      if (done && textStream) {
+        textStream.done();
+        aiState.done({
+          ...aiState.get(),
+          messages: [
+            ...aiState.get().messages,
+            {
+              id: nanoid(),
+              role: 'assistant',
+              content: accumulatedContent
+            }
+          ]
+        });
       }
     }
-  } else {
-    console.error('Response body is not readable');
+  } catch (error) {
+    console.error('Error during fetch or stream processing:', error);
   }
 
   return {
@@ -190,6 +191,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 
