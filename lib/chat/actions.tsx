@@ -163,24 +163,25 @@ async function submitUserMessage(content: string) {
         const cleanedMsg = msg.replace(/^data: /, '').trim();
         textStream.update(textStream.value + cleanedMsg);
       });
+    }
 
-      if (done && accumulatedContent) {
-        const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
-        textStream.update(textStream.value + finalMessage);
-        textStream.done();
+    // When the stream is complete
+    if (accumulatedContent) {
+      const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
+      textStream.update(textStream.value + finalMessage);
+      textStream.done();
 
-        aiState.update({
-          ...aiState.get(),
-          messages: [
-            ...aiState.get().messages,
-            {
-              id: nanoid(),
-              role: 'assistant',
-              content: textStream.value // Ensure this is a string
-            }
-          ]
-        });
-      }
+      aiState.update({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
+          {
+            id: nanoid(),
+            role: 'assistant',
+            content: textStream.value // Ensure this is a string
+          }
+        ]
+      });
     }
   } catch (error) {
     console.error('Error during fetch or stream processing:', error);
@@ -191,6 +192,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 export type AIState = {
