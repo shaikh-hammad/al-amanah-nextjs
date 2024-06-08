@@ -161,14 +161,14 @@ async function submitUserMessage(content: string) {
 
       parts.forEach((msg) => {
         const cleanedMsg = msg.replace(/^data: /, '').trim();
-        textStream.update(textStream.value + cleanedMsg);
+        textStream.update((prev) => prev + cleanedMsg);
       });
     }
 
     // When the stream is complete
     if (accumulatedContent) {
       const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
-      textStream.update(textStream.value + finalMessage);
+      textStream.update((prev) => prev + finalMessage);
       textStream.done();
 
       aiState.update({
@@ -178,7 +178,7 @@ async function submitUserMessage(content: string) {
           {
             id: nanoid(),
             role: 'assistant',
-            content: textStream.value.toString() // Ensure this is a string
+            content: textStream.value // Ensure this is a string
           }
         ]
       });
@@ -192,7 +192,6 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
-
 
 
 
