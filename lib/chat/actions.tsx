@@ -125,7 +125,6 @@ async function submitUserMessage(content: string) {
 
   let textStream = createStreamableValue<string>('');
   let textNode: React.ReactNode = <BotMessage content={textStream.value} />;
-  let accumulatedContent = ''; // Accumulate the content here
 
   const apiUrl = 'http://99.233.10.238:5000/chat'; // Replace with your FastAPI URL
 
@@ -147,6 +146,7 @@ async function submitUserMessage(content: string) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let done = false;
+    let accumulatedContent = '';
 
     while (!done) {
       const { value, done: streamDone } = await reader.read();
@@ -156,33 +156,27 @@ async function submitUserMessage(content: string) {
       accumulatedContent += chunk;
 
       // Extract and process individual messages from the event stream
-      const parts = accumulatedContent.split('\n\n');
-      accumulatedContent = parts.pop() || ''; // Keep the last part in the buffer
+      const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, '').trim());
 
-      parts.forEach((msg) => {
-        const cleanedMsg = msg.replace(/^data: /, '').trim();
-        textStream.update(textStream.value + cleanedMsg);
+      messages.forEach((msg) => {
+        textStream.update(msg);
       });
     }
 
     // When the stream is complete
-    if (accumulatedContent) {
-      const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
-      textStream.update(textStream.value + finalMessage);
-      textStream.done();
+    textStream.done();
 
-      aiState.update({
-        ...aiState.get(),
-        messages: [
-          ...aiState.get().messages,
-          {
-            id: nanoid(),
-            role: 'assistant',
-            content: textStream.value.toString() // Use the accumulated string
-          }
-        ]
-      });
-    }
+    aiState.update({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
+        {
+          id: nanoid(),
+          role: 'assistant',
+          content: accumulatedContent // Update with the accumulated content
+        }
+      ]
+    });
   } catch (error) {
     console.error('Error during fetch or stream processing:', error);
   }
@@ -192,6 +186,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 
