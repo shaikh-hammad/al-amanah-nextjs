@@ -147,6 +147,7 @@ async function submitUserMessage(content: string) {
     const decoder = new TextDecoder('utf-8');
     let done = false;
     let accumulatedContent = '';
+    let buffer = '';  // Buffer to store partial messages
 
     while (!done) {
       const { value, done: streamDone } = await reader.read();
@@ -156,30 +157,35 @@ async function submitUserMessage(content: string) {
       accumulatedContent += chunk;
 
       // Extract and process individual messages from the event stream
-      const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
+      const parts = accumulatedContent.split('\n\n');
+      accumulatedContent = parts.pop() || ''; // Keep the last part in the buffer
 
-      messages.forEach((msg) => {
+      parts.forEach((msg) => {
+        const cleanedMsg = msg.replace(/^data: /, '').trim();
         if (!textStream) {
           textStream = createStreamableValue('');
           textNode = <BotMessage content={textStream.value} />;
         }
-
-        textStream.update(msg);
+        textStream.update(textStream.value + cleanedMsg);
       });
 
-      if (done && textStream) {
-        textStream.done();
-        aiState.done({
-          ...aiState.get(),
-          messages: [
-            ...aiState.get().messages,
-            {
-              id: nanoid(),
-              role: 'assistant',
-              content: accumulatedContent
-            }
-          ]
-        });
+      if (done && accumulatedContent) {
+        const finalMessage = accumulatedContent.replace(/^data: /, '').trim();
+        if (textStream) {
+          textStream.update(textStream.value + finalMessage);
+          textStream.done();
+          aiState.done({
+            ...aiState.get(),
+            messages: [
+              ...aiState.get().messages,
+              {
+                id: nanoid(),
+                role: 'assistant',
+                content: textStream.value
+              }
+            ]
+          });
+        }
       }
     }
   } catch (error) {
@@ -191,9 +197,6 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
-
-
-
 
 export type AIState = {
   chatId: string
