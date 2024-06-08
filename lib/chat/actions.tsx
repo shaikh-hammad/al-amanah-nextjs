@@ -161,6 +161,9 @@ async function submitUserMessage(content: string) {
       messages.forEach((msg) => {
         textStream.update(msg);
       });
+
+      // Ensure that we clear accumulatedContent after processing
+      accumulatedContent = '';
     }
 
     // When the stream is complete
@@ -173,7 +176,7 @@ async function submitUserMessage(content: string) {
         {
           id: nanoid(),
           role: 'assistant',
-          content: accumulatedContent // Update with the accumulated content
+          content: textStream.value // Update with the final content
         }
       ]
     });
@@ -186,6 +189,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 
