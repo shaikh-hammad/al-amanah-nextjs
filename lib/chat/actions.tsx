@@ -152,19 +152,20 @@ async function submitUserMessage(content: string) {
       const { value, done: streamDone } = await reader.read();
       done = streamDone;
 
-      const chunk = decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true }).replace(/^data: /, '');
       accumulatedContent += chunk;
 
       // Extract and process individual messages from the event stream
-      const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, '').trim());
+      // const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
 
-      // Join the messages with a space separator to maintain spaces
-      const processedContent = messages.join(' ');
+      // Join the messages with a newline separator to maintain spaces
+      // const processedContent = messages.join('\n');
 
+      const processedContent = accumulatedContent;
       textStream.update(processedContent);
 
       // Ensure that we clear accumulatedContent after processing
-      accumulatedContent = streamDone ? '' : accumulatedContent;
+      accumulatedContent = '';
     }
 
     // When the stream is complete
@@ -190,8 +191,6 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
-
-
 
 
 
