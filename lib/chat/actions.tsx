@@ -156,7 +156,7 @@ async function submitUserMessage(content: string) {
       accumulatedContent += chunk;
 
       // Extract and process individual messages from the event stream
-      const messages = accumulatedContent.replace(/^data: /, '');
+      const messages = accumulatedContent.replace('data: ', '').trim();
 
       // Join the messages with a newline separator to maintain spaces
       // const processedContent = messages.join('\n');
