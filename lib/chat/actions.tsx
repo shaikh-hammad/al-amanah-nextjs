@@ -155,19 +155,9 @@ async function submitUserMessage(content: string) {
       const chunk = decoder.decode(value, { stream: true });
       accumulatedContent += chunk;
 
-      // Only process the content when a complete sentence or word boundary is detected
-      const lastSpaceIndex = accumulatedContent.lastIndexOf(' ');
-      if (lastSpaceIndex !== -1 && !done) {
-        const processableText = accumulatedContent.slice(0, lastSpaceIndex + 1);
-        accumulatedContent = accumulatedContent.slice(lastSpaceIndex + 1); // Keep the remainder for the next chunk
-
-        textStream.update(textStream.value + processableText);
-      }
-    }
-
-    // When the stream is complete, process any remaining text
-    if (accumulatedContent) {
+      // Process and update only the string content
       textStream.update(textStream.value + accumulatedContent);
+      accumulatedContent = ''; // Reset the accumulated content after updating
     }
 
     textStream.done();
@@ -192,6 +182,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 
