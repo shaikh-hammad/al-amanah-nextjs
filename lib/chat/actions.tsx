@@ -155,19 +155,21 @@ async function submitUserMessage(content: string) {
       const chunk = decoder.decode(value, { stream: true });
       accumulatedContent += chunk;
 
-      // Extract and process individual messages from the event stream
-      const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
+      // Only process the content when a complete sentence or word boundary is detected
+      const lastSpaceIndex = accumulatedContent.lastIndexOf(' ');
+      if (lastSpaceIndex !== -1 && !done) {
+        const processableText = accumulatedContent.slice(0, lastSpaceIndex + 1);
+        accumulatedContent = accumulatedContent.slice(lastSpaceIndex + 1); // Keep the remainder for the next chunk
 
-      // Join the messages with a newline separator to maintain spaces
-      const processedContent = messages.join('\n');
-
-      textStream.update(processedContent);
-
-      // Ensure that we clear accumulatedContent after processing
-      accumulatedContent = '';
+        textStream.update(textStream.value + processableText);
+      }
     }
 
-    // When the stream is complete
+    // When the stream is complete, process any remaining text
+    if (accumulatedContent) {
+      textStream.update(textStream.value + accumulatedContent);
+    }
+
     textStream.done();
 
     aiState.update({
