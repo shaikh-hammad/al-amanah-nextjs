@@ -155,25 +155,11 @@ async function submitUserMessage(content: string) {
       const chunk = decoder.decode(value, { stream: true });
       accumulatedContent += chunk;
 
-      // // Extract and process individual messages from the event stream
-      // const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
+      // Extract and process individual messages from the event stream
+      const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
 
-      // // Join the messages with a newline separator to maintain spaces
-      // const processedContent = messages.join('\n');
-
-      // Process the accumulated content
-      const processedContent = accumulatedContent
-        .split(/\n+/)                       // Split on one or more newlines
-        .filter(Boolean)                    // Remove any empty lines
-        .map((msg) => msg.replace(/^data:\s*/, '').trim())  // Remove 'data: ' prefix and trim
-        .join(' ')                          // Join with a space between chunks
-        .replace(/([a-zA-Z])([A-Z])/g, '$1 $2') // Add space between camelCase-like words
-        .replace(/\s+([,.;])/g, '$1')       // Remove space before punctuation
-        .replace(/\s+/g, ' ')               // Replace multiple spaces with a single space
-        .replace(/ ([0-9]+[^\s])/g, ' $1')  // Fix spacing around numbers
-        .replace(/([^\s])([A-Za-z])/g, '$1 $2') // Ensure space between letters that are not separated
-        .trim();                            // Trim the final result
-
+      // Join the messages with a newline separator to maintain spaces
+      const processedContent = messages.join('\n');
 
       textStream.update(processedContent);
 
