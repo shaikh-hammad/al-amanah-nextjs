@@ -163,10 +163,13 @@ async function submitUserMessage(content: string) {
 
       // Process the accumulated content
       const processedContent = accumulatedContent
-        .split('\n')                      // Split on every newline
-        .filter(Boolean)                   // Remove any empty lines
-        .map((msg) => msg.replace(/^data:\s*/, '').trim())  // Remove 'data: ' prefix and trim spaces
-        .join(' ');                        // Join with a single space between chunks
+        .split(/\n+/)                       // Split on one or more newlines
+        .filter(Boolean)                    // Remove any empty lines
+        .map((msg) => msg.replace(/^data:\s*/, '').trim())  // Remove 'data: ' prefix and trim
+        .join(' ')                          // Join with a space between chunks
+        .replace(/\s+/g, ' ')               // Ensure only a single space between words
+        .replace(/\s([,.;])/g, '$1');       // Remove space before punctuation
+
 
 
       textStream.update(processedContent);
