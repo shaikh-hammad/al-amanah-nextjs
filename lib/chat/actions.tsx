@@ -107,9 +107,9 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
 }
 
 async function submitUserMessage(content: string) {
-  'use server';
+  'use server'
 
-  const aiState = getMutableAIState<typeof AI>();
+  const aiState = getMutableAIState<typeof AI>()
 
   aiState.update({
     ...aiState.get(),
@@ -118,10 +118,10 @@ async function submitUserMessage(content: string) {
       {
         id: nanoid(),
         role: 'user',
-        content,
-      },
-    ],
-  });
+        content
+      }
+    ]
+  })
 
   let textStream = createStreamableValue<string>('');
   let textNode: React.ReactNode = <BotMessage content={textStream.value} />;
@@ -132,11 +132,11 @@ async function submitUserMessage(content: string) {
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        message: content,
-      }),
+        message: content
+      })
     });
 
     if (!response.ok || !response.body) {
@@ -152,26 +152,30 @@ async function submitUserMessage(content: string) {
       const { value, done: streamDone } = await reader.read();
       done = streamDone;
 
-      if (value) {
-        const chunk = decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true });
+      accumulatedContent += chunk;
 
-        // Assuming the chunk may contain JSON-encoded text or plain text
-        try {
-          const jsonChunk = JSON.parse(chunk); // Try to parse the chunk as JSON
+      // // Extract and process individual messages from the event stream
+      // const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
 
-          if (jsonChunk.data) {
-            accumulatedContent += jsonChunk.data; // Concatenate the actual data content
-          }
-        } catch {
-          // If parsing fails, treat it as plain text
-          accumulatedContent += chunk;
-        }
+      // // Join the messages with a newline separator to maintain spaces
+      // const processedContent = messages.join('\n');
 
-        // Update the text stream with the accumulated content
-        textStream.update(accumulatedContent);
-      }
+      // Process the accumulated content
+      const processedContent = accumulatedContent
+        .split('\n')                      // Split on every newline
+        .filter(Boolean)                   // Remove any empty lines
+        .map((msg) => msg.replace(/^data:\s*/, '').trim())  // Remove 'data: ' prefix and trim spaces
+        .join(' ');                        // Join with a single space between chunks
+
+
+      textStream.update(processedContent);
+
+      // Ensure that we clear accumulatedContent after processing
+      accumulatedContent = '';
     }
 
+    // When the stream is complete
     textStream.done();
 
     aiState.update({
@@ -181,9 +185,9 @@ async function submitUserMessage(content: string) {
         {
           id: nanoid(),
           role: 'assistant',
-          content: accumulatedContent, // Ensure content is the final accumulated string
-        },
-      ],
+          content: textStream.value.toString() // Update with the final content string
+        }
+      ]
     });
   } catch (error) {
     console.error('Error during fetch or stream processing:', error);
@@ -191,11 +195,9 @@ async function submitUserMessage(content: string) {
 
   return {
     id: nanoid(),
-    display: textNode, // Or any other relevant UI representation
+    display: textNode // Or any other relevant UI representation
   };
 }
-
-
 
 
 
