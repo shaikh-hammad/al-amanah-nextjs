@@ -167,10 +167,13 @@ async function submitUserMessage(content: string) {
         .filter(Boolean)                    // Remove any empty lines
         .map((msg) => msg.replace(/^data:\s*/, '').trim())  // Remove 'data: ' prefix and trim
         .join(' ')                          // Join with a space between chunks
-        .replace(/(?<=[a-zA-Z])(?=[A-Z])/g, ' ') // Add space between camelCase words
-        .replace(/\s+([,.;])/g, '$1')        // Remove space before punctuation
-        .replace(/\s+/g, ' ')                // Replace multiple spaces with a single space
-        .trim();                             // Trim the final result
+        .replace(/([a-zA-Z])([A-Z])/g, '$1 $2') // Add space between camelCase-like words
+        .replace(/\s+([,.;])/g, '$1')       // Remove space before punctuation
+        .replace(/\s+/g, ' ')               // Replace multiple spaces with a single space
+        .replace(/ ([0-9]+[^\s])/g, ' $1')  // Fix spacing around numbers
+        .replace(/([^\s])([A-Za-z])/g, '$1 $2') // Ensure space between letters that are not separated
+        .trim();                            // Trim the final result
+
 
       textStream.update(processedContent);
 
