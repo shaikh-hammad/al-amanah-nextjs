@@ -159,7 +159,7 @@ async function submitUserMessage(content: string) {
       const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, '').trim());
 
       // Join the messages with a newline separator to maintain spaces
-      const processedContent = messages.join('');
+      const processedContent = messages.join('\n');
 
       textStream.update(processedContent);
 
