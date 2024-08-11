@@ -107,9 +107,9 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
 }
 
 async function submitUserMessage(content: string) {
-  'use server'
+  'use server';
 
-  const aiState = getMutableAIState<typeof AI>()
+  const aiState = getMutableAIState<typeof AI>();
 
   aiState.update({
     ...aiState.get(),
@@ -118,10 +118,10 @@ async function submitUserMessage(content: string) {
       {
         id: nanoid(),
         role: 'user',
-        content
-      }
-    ]
-  })
+        content,
+      },
+    ],
+  });
 
   let textStream = createStreamableValue<string>('');
   let textNode: React.ReactNode = <BotMessage content={textStream.value} />;
@@ -132,11 +132,11 @@ async function submitUserMessage(content: string) {
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        message: content
-      })
+        message: content,
+      }),
     });
 
     if (!response.ok || !response.body) {
@@ -152,12 +152,24 @@ async function submitUserMessage(content: string) {
       const { value, done: streamDone } = await reader.read();
       done = streamDone;
 
-      const chunk = decoder.decode(value, { stream: true });
-      accumulatedContent += chunk;
+      if (value) {
+        const chunk = decoder.decode(value, { stream: true });
 
-      // Process and update only the string content
-      textStream.update(textStream.value + accumulatedContent);
-      accumulatedContent = ''; // Reset the accumulated content after updating
+        // Assuming the chunk may contain JSON-encoded text or plain text
+        try {
+          const jsonChunk = JSON.parse(chunk); // Try to parse the chunk as JSON
+
+          if (jsonChunk.data) {
+            accumulatedContent += jsonChunk.data; // Concatenate the actual data content
+          }
+        } catch {
+          // If parsing fails, treat it as plain text
+          accumulatedContent += chunk;
+        }
+
+        // Update the text stream with the accumulated content
+        textStream.update(accumulatedContent);
+      }
     }
 
     textStream.done();
@@ -169,9 +181,9 @@ async function submitUserMessage(content: string) {
         {
           id: nanoid(),
           role: 'assistant',
-          content: textStream.value.toString() // Update with the final content string
-        }
-      ]
+          content: accumulatedContent, // Ensure content is the final accumulated string
+        },
+      ],
     });
   } catch (error) {
     console.error('Error during fetch or stream processing:', error);
@@ -179,9 +191,10 @@ async function submitUserMessage(content: string) {
 
   return {
     id: nanoid(),
-    display: textNode // Or any other relevant UI representation
+    display: textNode, // Or any other relevant UI representation
   };
 }
+
 
 
 
