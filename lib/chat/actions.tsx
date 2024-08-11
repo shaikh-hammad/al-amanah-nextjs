@@ -152,8 +152,9 @@ async function submitUserMessage(content: string) {
       const { value, done: streamDone } = await reader.read();
       done = streamDone;
 
-      const chunk = decoder.decode(value, { stream: true }).trim().replace(/^data: /, '');
-      accumulatedContent += chunk;
+      const chunk = decoder.decode(value, { stream: true });
+      const formatted_chunk = chunk.replace(/^data: /, '').trim();
+      accumulatedContent += formatted_chunk;
 
       // Extract and process individual messages from the event stream
       // const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
