@@ -158,8 +158,8 @@ async function submitUserMessage(content: string) {
       // Extract and process individual messages from the event stream
       const messages = accumulatedContent.split('\n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, '').trim());
 
-      // Join the messages without adding extra newlines
-      const processedContent = messages.join('');
+      // Join the messages with a space separator to maintain spaces
+      const processedContent = messages.join(' ');
 
       textStream.update(processedContent);
 
@@ -190,6 +190,7 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
 
 
 
