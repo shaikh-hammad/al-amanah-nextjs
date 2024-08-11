@@ -167,10 +167,10 @@ async function submitUserMessage(content: string) {
         .filter(Boolean)                    // Remove any empty lines
         .map((msg) => msg.replace(/^data:\s*/, '').trim())  // Remove 'data: ' prefix and trim
         .join(' ')                          // Join with a space between chunks
-        .replace(/\s+/g, ' ')               // Ensure only a single space between words
-        .replace(/\s([,.;])/g, '$1');       // Remove space before punctuation
-
-
+        .replace(/(?<=[a-zA-Z])(?=[A-Z])/g, ' ') // Add space between camelCase words
+        .replace(/\s+([,.;])/g, '$1')        // Remove space before punctuation
+        .replace(/\s+/g, ' ')                // Replace multiple spaces with a single space
+        .trim();                             // Trim the final result
 
       textStream.update(processedContent);
 
