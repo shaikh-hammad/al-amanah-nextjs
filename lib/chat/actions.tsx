@@ -35,7 +35,7 @@ import { saveChat } from '@/app/actions'
 import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
-import React, { useState } from 'react';
+import React from 'react';
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
   'use server'
@@ -124,9 +124,7 @@ async function submitUserMessage(content: string) {
     ]
   })
 
-  // Force a UI update with useState
-  const [text, setText] = useState('');
-  let textStream = createStreamableValue<string>(text);
+  let textStream = createStreamableValue<string>('');
   let textNode: React.ReactNode = <BotMessage content={textStream.value} />;
 
   const apiUrl = 'http://99.233.10.238:5000/chat'; // Replace with your FastAPI URL
@@ -165,12 +163,8 @@ async function submitUserMessage(content: string) {
         // Join the messages with a newline separator to maintain spaces
         const processedContent = messages.join('');
 
-        // Update text stream and force UI update
-        setText(prevText => {
-          const newText = prevText + processedContent;
-          textStream.update(newText);
-          return newText;
-        });
+        // Update text stream
+        textStream.update(processedContent);
 
         // Ensure accumulatedContent is maintained for any incomplete message
         accumulatedContent = messages[messages.length - 1].endsWith('\n\n') ? '' : messages[messages.length - 1];
