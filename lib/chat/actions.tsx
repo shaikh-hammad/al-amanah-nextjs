@@ -111,6 +111,12 @@ async function submitUserMessage(content: string) {
 
   const aiState = getMutableAIState<typeof AI>()
 
+  // Extract chat history from aiState.messages
+  const chatHistory = aiState.get().messages.map((message) => ({
+    role: message.role,  // 'user' or 'assistant'
+    content: message.content,  // The actual message content
+  }));
+
   aiState.update({
     ...aiState.get(),
     messages: [
@@ -135,7 +141,8 @@ async function submitUserMessage(content: string) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        message: content
+        message: content,
+        chat_history_v: chatHistory
       })
     });
 
