@@ -35,7 +35,6 @@ import { saveChat } from '@/app/actions'
 import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
-import React from 'react';
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
   'use server'
@@ -153,22 +152,20 @@ async function submitUserMessage(content: string) {
       const { value, done: streamDone } = await reader.read();
       done = streamDone;
 
-      if (value) {
-        const chunk = decoder.decode(value, { stream: true });
-        accumulatedContent += chunk;
+      const chunk = decoder.decode(value, { stream: true });
+      accumulatedContent += chunk;
+      console.log(accumulatedContent);
 
-        // Extract and process individual messages from the event stream
-        const messages = accumulatedContent.split(' \n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
+      // Extract and process individual messages from the event stream
+      const messages = accumulatedContent.split(' \n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
 
-        // Join the messages with a newline separator to maintain spaces
-        const processedContent = messages.join('');
+      // Join the messages with a newline separator to maintain spaces
+      const processedContent = messages.join('');
 
-        // Update text stream
-        textStream.update(processedContent);
+      textStream.update(processedContent);
 
-        // Ensure accumulatedContent is maintained for any incomplete message
-        accumulatedContent = messages[messages.length - 1].endsWith('\n\n') ? '' : messages[messages.length - 1];
-      }
+      // Ensure that we clear accumulatedContent after processing
+      accumulatedContent = '';
     }
 
     // When the stream is complete
@@ -194,6 +191,8 @@ async function submitUserMessage(content: string) {
     display: textNode // Or any other relevant UI representation
   };
 }
+
+
 
 export type AIState = {
   chatId: string
