@@ -36,6 +36,12 @@ import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
 
+// const uId = Math.floor(Math.random() * 10000);
+// let chatHistory = [];
+
+// async function createAiState(){
+//   return getMutableAIState<typeof AI>();
+// }
 async function confirmPurchase(symbol: string, price: number, amount: number) {
   'use server'
 
@@ -105,17 +111,30 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
     }
   }
 }
+// function getStorage(key: string){
+//   return window.sessionStorage.getItem(key);
+// }
+// function setStorage(key: string, value: string){
+//   // let uId_string = sessionStorage.getItem(`uId`);
+//   // if (!uId_string) {
+//   //   let uId = Math.floor(Math.random() * 10000);
+//   // } else {
+//   //   let uId = parseInt(JSON.parse(uId_string));
+//   // }
+//   window.sessionStorage.setItem(key, JSON.stringify(value));
+// }
 
-async function submitUserMessage(content: string) {
+async function submitUserMessage(content: string, chatHistory?: []) {
   'use server'
 
-  const aiState = getMutableAIState<typeof AI>()
-
-  // Extract chat history from aiState.messages
-  const chatHistory = aiState.get().messages.map((message) => ({
-    role: message.role,  // 'user' or 'assistant'
-    content: message.content,  // The actual message content
-  }));
+  const aiState = getMutableAIState<typeof AI>();
+  
+  // let chatHistory_string = getStorage('chatHistory');
+  // if (!chatHistory_string) {
+  //   let chatHistory = [];
+  // } else {
+  //   let chatHistory = JSON.parse(chatHistory_string);
+  // }
 
   aiState.update({
     ...aiState.get(),
@@ -128,12 +147,22 @@ async function submitUserMessage(content: string) {
       }
     ]
   })
-
+  // Extract chat history from aiState.messages
+  // chatHistory.push({
+  //     role: 'user',  // 'user' or 'assistant'
+  //     content: content,  // The actual message content
+  //   });
+  // setStorage('chatHistory', JSON.stringify(chatHistory));
+  // let chatHistory = aiState.get().messages.map((message) => ({
+  //   role: message.role,  // 'user' or 'assistant'
+  //   content: message.content,  // The actual message content
+  // }));
+  console.log(chatHistory || []);
   let textStream = createStreamableValue<string>('');
   let textNode: React.ReactNode = <BotMessage content={textStream.value} />;
 
   const apiUrl = 'http://99.233.10.238:5000/chat'; // Replace with your FastAPI URL
-
+  let finalResponse = '';
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -154,30 +183,31 @@ async function submitUserMessage(content: string) {
     const decoder = new TextDecoder('utf-8');
     let done = false;
     let accumulatedContent = '';
-
+    let answer = '';
     while (!done) {
       const { value, done: streamDone } = await reader.read();
       done = streamDone;
 
       const chunk = decoder.decode(value, { stream: true });
       accumulatedContent += chunk;
-      console.log(accumulatedContent);
+      // console.log(accumulatedContent);
 
       // Extract and process individual messages from the event stream
       const messages = accumulatedContent.split(' \n\n').filter(Boolean).map((msg) => msg.replace(/^data: /, ''));
 
       // Join the messages with a newline separator to maintain spaces
       const processedContent = messages.join('');
-
+      answer += processedContent.toString();
+      // console.log('answer' + answer);
       textStream.update(processedContent);
-
+      
       // Ensure that we clear accumulatedContent after processing
       accumulatedContent = '';
     }
 
     // When the stream is complete
     textStream.done();
-
+    finalResponse = answer;
     aiState.update({
       ...aiState.get(),
       messages: [
@@ -185,17 +215,23 @@ async function submitUserMessage(content: string) {
         {
           id: nanoid(),
           role: 'assistant',
-          content: textStream.value.toString() // Update with the final content string
+          content: answer // Update with the final content string
         }
       ]
     });
+    // chatHistory.push({
+    //   role: 'assistant',  // 'user' or 'assistant'
+    //   content: answer,  // The actual message content
+    // });
+    
   } catch (error) {
     console.error('Error during fetch or stream processing:', error);
   }
 
   return {
     id: nanoid(),
-    display: textNode // Or any other relevant UI representation
+    display: textNode, // Or any other relevant UI representation
+    answer: finalResponse
   };
 }
 
@@ -214,7 +250,8 @@ export type UIState = {
 export const AI = createAI<AIState, UIState>({
   actions: {
     submitUserMessage,
-    confirmPurchase
+    confirmPurchase,
+    // createAiState
   },
   initialUIState: [],
   initialAIState: { chatId: nanoid(), messages: [] },

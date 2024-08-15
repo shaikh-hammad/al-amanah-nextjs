@@ -11,6 +11,8 @@ import { useAIState, useActions, useUIState } from 'ai/rsc'
 import type { AI } from '@/lib/chat/actions'
 import { nanoid } from 'nanoid'
 import { UserMessage } from './stocks/message'
+import { useEffect } from 'react';
+import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 
 export interface ChatPanelProps {
   id?: string
@@ -33,6 +35,8 @@ export function ChatPanel({
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage } = useActions()
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
+  const [storedValue, setStoredValue] = useLocalStorage<string>('aaChatHistory', JSON.stringify([]));
+  const chatHistory = JSON.parse(storedValue);
 
   const exampleMessages = [
     {
@@ -81,10 +85,20 @@ export function ChatPanel({
                       display: <UserMessage>{example.message}</UserMessage>
                     }
                   ])
-
+                  
                   const responseMessage = await submitUserMessage(
-                    example.message
+                    example.message,
+                    chatHistory
                   )
+                  chatHistory.push({
+                    role: 'user',  // 'user' or 'assistant'
+                    content: example.message,  // The actual message content
+                  });
+                  chatHistory.push({
+                    role: 'assistant',  // 'user' or 'assistant'
+                    content: responseMessage.answer,  // The actual message content
+                  });
+                  setStoredValue(JSON.stringify(chatHistory));
 
                   setMessages(currentMessages => [
                     ...currentMessages,

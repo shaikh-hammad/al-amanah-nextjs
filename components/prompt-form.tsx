@@ -17,6 +17,8 @@ import {
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react';
+import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 
 export function PromptForm({
   input,
@@ -30,6 +32,9 @@ export function PromptForm({
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
+  // const uId = Math.floor(Math.random() * 10000);
+  const [storedValue, setStoredValue] = useLocalStorage<string>('aaChatHistory', JSON.stringify([]));
+  const chatHistory = JSON.parse(storedValue);
 
   React.useEffect(() => {
     if (inputRef.current) {
@@ -49,6 +54,10 @@ export function PromptForm({
         }
 
         const value = input.trim()
+        chatHistory.push({
+              role: 'user',  // 'user' or 'assistant'
+              content: value,  // The actual message content
+            });
         setInput('')
         if (!value) return
 
@@ -62,8 +71,13 @@ export function PromptForm({
         ])
 
         // Submit and get response message
-        const responseMessage = await submitUserMessage(value)
+        const responseMessage = await submitUserMessage(value, chatHistory)
         setMessages(currentMessages => [...currentMessages, responseMessage])
+        chatHistory.push({
+          role: 'assistant',  // 'user' or 'assistant'
+          content: responseMessage.answer,  // The actual message content
+        });
+        setStoredValue(JSON.stringify(chatHistory));
       }}
     >
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
