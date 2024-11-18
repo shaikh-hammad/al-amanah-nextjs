@@ -161,7 +161,7 @@ async function submitUserMessage(content: string, chatHistory?: []) {
   let textStream = createStreamableValue<string>('');
   let textNode: React.ReactNode = <BotMessage content={textStream.value} />;
 
-  const apiUrl = 'http://99.233.15.122:5000/chat'; // Replace with your FastAPI URL
+  const apiUrl = 'http://shaikh-services.asuscomm.com:5000/chat'; // Replace with your FastAPI URL
   let finalResponse = '';
   try {
     const response = await fetch(apiUrl, {
