@@ -188,7 +188,7 @@ function IconUser({ className, ...props }: React.ComponentProps<'svg'>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 256 256"
+      viewBox="0 0 1272 1245"
       className={cn('size-4', className)}
       {...props}
     >
