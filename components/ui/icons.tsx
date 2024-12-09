@@ -187,7 +187,7 @@ function IconArrowRight({ className, ...props }: React.ComponentProps<'svg'>) {
 function IconUser({ className, ...props }: React.ComponentProps<'svg'>) {
   return (
     <svg
-      fill="currentColor"
+      fill="white"
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1272 1245"
       role="img"
