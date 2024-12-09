@@ -1,5 +1,4 @@
 import * as React from 'react'
-
 import { shareChat } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { PromptForm } from '@/components/prompt-form'
@@ -11,7 +10,7 @@ import { useAIState, useActions, useUIState } from 'ai/rsc'
 import type { AI } from '@/lib/chat/actions'
 import { nanoid } from 'nanoid'
 import { UserMessage } from './stocks/message'
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 
 export interface ChatPanelProps {
@@ -35,8 +34,9 @@ export function ChatPanel({
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage } = useActions()
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
-  const [storedValue, setStoredValue] = useLocalStorage<string>('aaChatHistory', JSON.stringify([]));
-  const chatHistory = JSON.parse(storedValue);
+  const [storedValue, setStoredValue] = useLocalStorage<string>('aaChatHistory', JSON.stringify([]))
+  const chatHistory = JSON.parse(storedValue)
+  const [loading, setLoading] = useState(false) // Add loading state
 
   const exampleMessages = [
     {
@@ -85,7 +85,7 @@ export function ChatPanel({
                       display: <UserMessage>{example.message}</UserMessage>
                     }
                   ])
-                  
+                  setLoading(true) // Set loading to true
                   const responseMessage = await submitUserMessage(
                     example.message,
                     chatHistory
@@ -99,6 +99,7 @@ export function ChatPanel({
                     content: responseMessage.answer,  // The actual message content
                   });
                   setStoredValue(JSON.stringify(chatHistory));
+                  setLoading(false) // Set loading to false
 
                   setMessages(currentMessages => [
                     ...currentMessages,
@@ -113,6 +114,14 @@ export function ChatPanel({
               </div>
             ))}
         </div>
+
+        {loading && (
+          <div className="flex justify-center">
+            <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        )}
 
         {messages?.length >= 2 ? (
           <div className="flex h-12 items-center justify-center">
